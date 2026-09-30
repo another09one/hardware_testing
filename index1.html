@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MCB Simulator</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f7fb;--card:#fff;--tx:#1b2430;--mut:#5b6675;--bd:#d9e1ec;--nv:#1f497d;--bl:#0070c0;--or:#e8731a;--gr:#1e8a44;--rd:#c62828;--tint:#e8f0fa}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1520;--card:#172232;--tx:#e6edf6;--mut:#9aa9bc;--bd:#2a3a52;--nv:#8fb8ea;--bl:#4aa3ff;--or:#ff9a4d;--gr:#4cc47a;--rd:#ff6b6b;--tint:#1d2c42}}
+:root[data-theme="dark"]{--bg:#0e1520;--card:#172232;--tx:#e6edf6;--mut:#9aa9bc;--bd:#2a3a52;--nv:#8fb8ea;--bl:#4aa3ff;--or:#ff9a4d;--gr:#4cc47a;--rd:#ff6b6b;--tint:#1d2c42}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:Calibri,'Segoe UI',Arial,sans-serif;line-height:1.4}
+header{background:var(--bl);color:#fff;padding:14px 20px}
+header h1{margin:0;font-family:'Times New Roman',serif;font-size:clamp(20px,3.4vw,30px)}
+header p{margin:4px 0 0;font-size:14px;opacity:.95}
+main{max-width:1180px;margin:0 auto;padding:16px;display:grid;gap:14px;grid-template-columns:320px 1fr}
+@media(max-width:860px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,.06)}
+h2{margin:0 0 10px;font-size:17px;color:var(--nv)}
+label{display:block;font-size:13px;color:var(--mut);margin:8px 0 3px}
+select{width:100%;padding:8px;border-radius:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);font-size:15px}
+.sw{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--bd);font-size:14px}
+.sw input{width:20px;height:20px;accent-color:var(--gr)}
+.btns{display:flex;gap:8px;margin-top:12px}
+button{flex:1;padding:11px;border:0;border-radius:8px;font-size:15px;font-weight:700;cursor:pointer;color:#fff;background:var(--or)}
+button.sec{background:var(--mut)}
+button:disabled{opacity:.5;cursor:not-allowed}
+#msg{margin-top:10px;font-size:14px;font-weight:700;min-height:20px}
+.col{display:grid;gap:14px;min-width:0}
+.chain{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px}
+.blk{flex:1 0 96px;text-align:center;padding:10px 6px;border:2px solid var(--bd);border-radius:10px;font-size:12.5px;font-weight:700;background:var(--tint);transition:.25s}
+.blk.on{border-color:var(--or);background:var(--or);color:#fff;transform:translateY(-2px)}
+.blk.done{border-color:var(--gr)}
+.steps{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.st{padding:5px 10px;border-radius:99px;font-size:12.5px;background:var(--tint);border:1px solid var(--bd)}
+.st.on{background:var(--bl);color:#fff}.st.done{background:var(--gr);color:#fff}
+.wrap{position:relative;overflow:hidden}
+canvas{width:100%;height:280px;display:block;border-radius:8px;background:var(--bg)}
+.leg{font-size:12.5px;color:var(--mut);margin-top:6px}
+.kp{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.k{background:var(--tint);border-radius:10px;padding:10px;text-align:center}
+.k b{display:block;font-size:22px;color:var(--nv)}.k span{font-size:12.5px;color:var(--mut)}
+.pass{color:var(--gr)!important}.fail{color:var(--rd)!important}
+.pls{display:flex;flex-wrap:wrap;gap:8px}.pl{padding:6px 12px;border-radius:99px;font-size:13px;background:var(--tint);border:1px solid var(--bd);transition:.25s}.pl.on{background:var(--gr);color:#fff;border-color:var(--gr)}.pl.trip{background:var(--rd);color:#fff;border-color:var(--rd)}#cv2{height:230px}
+#log{font-family:Consolas,monospace;font-size:12.5px;max-height:140px;overflow:auto;color:var(--mut);white-space:pre-wrap}
+table{width:100%;border-collapse:collapse;font-size:14px}td{padding:5px 4px;border-bottom:1px solid var(--bd)}td:first-child{color:var(--mut)}
+.note{font-size:12.5px;color:var(--mut);padding:0 16px 20px;max-width:1180px;margin:0 auto}
+</style></head><body>
+<header><h1>MCB Simulator</h1>
+<p>Protection testing prototype · Smart India Hackathon 2026 · PS 26029 · Team Current Control</p></header>
+<main>
+<section class="card"><h2>HMI – Test Input</h2>
+<label>Prospective fault current</label><select id="ka"><option value="3">3 kA</option><option value="6" selected>6 kA</option><option value="10">10 kA</option></select>
+<label>MCB rating</label><select id="in"><option value="16">16 A</option><option value="32" selected>32 A</option></select>
+<label>Trip curve</label><select id="cv"><option value="B">B</option><option value="C" selected>C</option><option value="D">D</option></select>
+<label>Power factor (auto R–X<sub>L</sub> selection)</label><select id="pf"><option value="0.9">0.9</option><option value="0.7" selected>0.7</option><option value="0.5">0.5</option></select>
+<h2 style="margin-top:16px">PLC Safety Interlocks</h2>
+<div class="sw">Polycarbonate shield locked<input type="checkbox" class="il" checked></div>
+<div class="sw">Test-cell door closed<input type="checkbox" class="il" checked></div>
+<div class="sw">Emergency stop released<input type="checkbox" class="il" checked></div>
+<div class="sw">Earthing verified<input type="checkbox" class="il" checked></div>
+<div class="btns"><button id="go">▶ Start test</button><button id="rs" class="sec">Reset</button></div>
+<div class="btns"><button id="ab" style="background:var(--rd)" disabled>⛔ Open door mid-test (emergency abort)</button></div>
+<div id="msg"></div>
+<div class="leg">Tip: untick any interlock and press Start to see the PLC block the fault.</div></section>
+<div class="col">
+<section class="card"><h2>System Execution &amp; Architecture</h2>
+<div class="chain" id="chain"></div><div class="steps" id="steps"></div></section>
+<section class="card"><h2>High-Speed Waveform Capture</h2><div class="wrap"><canvas id="cv1"></canvas></div>
+<div class="leg"><span style="color:var(--mut)">┅ prospective current (no breaker)</span> &nbsp; <span style="color:var(--or)">━ actual current through MCB</span> &nbsp; <span style="color:var(--rd)">│ trip / interruption</span></div></section>
+<section class="card"><h2>Protection Layers</h2><div class="pls"><span class="pl">Arc-flash shield (12 mm polycarbonate)</span><span class="pl">Door-kill switch</span><span class="pl">Optocoupler isolation</span><span class="pl">24 V · ~20 ms burst limit</span></div>
+<div class="leg">Layers arm after the interlock check. Use the emergency abort during a run to watch the door-kill cut the fault.</div></section>
+<section class="card"><h2>Analysis</h2><div class="kp">
+<div class="k"><b id="rIp">–</b><span>Peak current Ip</span></div>
+<div class="k"><b id="rTr">–</b><span>Trip time</span></div>
+<div class="k"><b id="rIt">–</b><span>Let-through I²t</span></div>
+<div class="k"><b id="rV">–</b><span>Verdict</span></div></div></section>
+<section class="card"><h2>Trip Curve – Operating Point</h2><canvas id="cv2"></canvas><div class="leg">Current as multiple of rated current (log) vs time (log). Shaded band = magnetic (instantaneous) region of the selected curve. Typical band, illustrative.</div></section>
+<section class="card"><h2>Automated Test Report</h2><table id="rep"><tr><td colspan="2">Run a test to generate the digital report.</td></tr></table>
+<h2 style="margin-top:14px">Event log</h2><div id="log"></div></section>
+</div></main>
+<div class="note">Simulation for demonstration only: values come from a simplified R–L fault model with point-on-wave closing and a modelled breaker opening/arc time. The let-through limit shown is illustrative, not a certified figure from IS/IEC 60898-1.</div>
+<script>
+const $=id=>document.getElementById(id);
+const CH=['HMI / Test Input','PLC Controller','Safety & Interlocks','Automated R–XL','HC Transformer','MCB Under Test','Sensing, DAQ & Report'];
+const ST=['Configure','Safety Check','R–XL Selection','Fault Initiation','Waveform Capture','Trip Detection','Analysis','Report'];
+const stg=[[0],[1,2],[3],[4],[5,6],[5,6],[6],[6]];
+$('chain').innerHTML=CH.map((c,i)=>`<div class="blk" id="b${i}">${c}</div>`).join('');
+$('steps').innerHTML=ST.map((c,i)=>`<div class="st" id="s${i}">${i+1}. ${c}</div>`).join('');
+const cvs=$('cv1'),ctx=cvs.getContext('2d');let sim=null,busy=false,runs=0;
+const W=2*Math.PI*50,TMAX=30;
+function log(t){const l=$('log');l.textContent+=t+'\n';l.scrollTop=l.scrollHeight}
+function mark(k){ST.forEach((_,i)=>$('s'+i).className='st'+(i<k?' done':i==k?' on':''));
+ CH.forEach((_,i)=>$('b'+i).className='blk');
+ document.querySelectorAll('.pl').forEach(e=>{e.classList.remove('trip');e.classList.toggle('on',k>=1&&k<=5)});
+ if(k<0)return;
+ if(k<8){stg.slice(0,k).forEach(a=>a.forEach(i=>$('b'+i).classList.add('done')));stg[k].forEach(i=>$('b'+i).className='blk on')}else CH.forEach((_,i)=>$('b'+i).classList.add('done'))}
+function model(){const kA=+$('ka').value,In=+$('in').value,cv=$('cv').value,pf=+$('pf').value;
+ const ph=Math.acos(pf),tau=Math.tan(ph)/W,I=Math.SQRT2*kA*1000;
+ const cf={B:.9,C:.6,D:.3}[cv];
+ const to=(0.8+cf+In/32*.6)*Math.pow(6/kA,.3),ta=2.2+In/32*.8,tt=to+ta;
+ const pro=t=>I*(Math.cos(W*t/1e3)-Math.exp(-t/1e3/tau));
+ const io=pro(to);
+ const act=t=>t<=to?pro(t):t<=tt?io*(1-(t-to)/ta):0;
+ let ip=0,it=0;const dt=.01;for(let t=0;t<=TMAX;t+=dt){const a=act(t);ip=Math.max(ip,Math.abs(a));it+=a*a*dt/1e3}
+ let pk=0;for(let t=0;t<=TMAX;t+=.05)pk=Math.max(pk,Math.abs(pro(t)));
+ return{kA,In,cv,pf,tau,to,tt,ip,it,pro,act,pk,lim:In==16?35000:60000}}
+function draw(tc){const d=devicePixelRatio||1,w=cvs.clientWidth,h=cvs.clientHeight;cvs.width=w*d;cvs.height=h*d;ctx.setTransform(d,0,0,d,0,0);
+ const cs=getComputedStyle(document.documentElement),mut=cs.getPropertyValue('--mut'),bd=cs.getPropertyValue('--bd'),or=cs.getPropertyValue('--or'),rd=cs.getPropertyValue('--rd');
+ ctx.clearRect(0,0,w,h);const L=46,B=h-24,T=10,R=w-10;
+ ctx.strokeStyle=bd;ctx.fillStyle=mut;ctx.font='11px Calibri,Arial';ctx.lineWidth=1;
+ for(let i=0;i<=6;i++){const x=L+(R-L)*i/6;ctx.beginPath();ctx.moveTo(x,T);ctx.lineTo(x,B);ctx.stroke();ctx.fillText((i*5)+' ms',x-10,h-8)}
+ ctx.beginPath();ctx.moveTo(L,B);ctx.lineTo(R,B);ctx.stroke();
+ if(!sim){ctx.fillText('Press Start test to capture the fault waveform',L+20,h/2);return}
+ const sc=(B-T-6)/(sim.pk*1.05),X=t=>L+(R-L)*t/TMAX,Y=v=>B-v*sc;
+ ctx.fillText((sim.pk/1000).toFixed(1)+' kA',4,T+10);ctx.fillText('0',30,B);
+ const line=(f,c,dash,end)=>{ctx.beginPath();ctx.setLineDash(dash);ctx.strokeStyle=c;ctx.lineWidth=dash.length?1.5:2.5;let s=true;
+  for(let t=0;t<=end;t+=.1){const y=Y(Math.max(0,f(t)));s?ctx.moveTo(X(t),y):ctx.lineTo(X(t),y);s=false}ctx.stroke();ctx.setLineDash([])};
+ line(sim.pro,mut,[5,4],Math.min(tc,TMAX));line(sim.act,or,[],Math.min(tc,TMAX));
+ if(tc>=sim.tt){ctx.strokeStyle=rd;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(X(sim.tt),T);ctx.lineTo(X(sim.tt),B);ctx.stroke();ctx.fillStyle=rd;ctx.fillText('trip '+sim.tt.toFixed(1)+' ms',X(sim.tt)+4,T+12);
+  ctx.fillStyle=or;ctx.fillText('Ip '+(sim.ip/1000).toFixed(2)+' kA',X(sim.to)+6,Y(sim.ip)-4)}}
+let ab=false;const sleep=ms=>new Promise((r,j)=>setTimeout(()=>ab?j('ab'):r(),ms));
+async function run(){if(busy)return;ab=false;try{await core()}catch(e){if(e!=='ab')throw e;mark(-1);document.querySelectorAll('.pl').forEach(x=>x.classList.add('trip'));$('msg').textContent='⛔ DOOR-KILL: fault current cut, test aborted safely';$('msg').style.color='var(--rd)';log('[PLC] door opened – door-kill switch de-energised the fault circuit');busy=false;$('go').disabled=false;$('ab').disabled=true}}
+async function core(){busy=true;$('go').disabled=true;$('ab').disabled=false;$('msg').textContent='';$('msg').style.color='';
+ ['rIp','rTr','rIt','rV'].forEach(i=>{$(i).textContent='–';$(i).className=''});sim=null;draw(0);
+ mark(0);log('[HMI] parameters entered');await sleep(500);
+ mark(1);const ok=[...document.querySelectorAll('.il')].every(c=>c.checked);
+ if(!ok){$('msg').textContent='⛔ PLC INTERLOCK OPEN – fault initiation blocked';$('msg').style.color='var(--rd)';log('[PLC] interlock check FAILED – test aborted');mark(-1);busy=false;$('go').disabled=false;$('ab').disabled=true;return}
+ log('[PLC] interlocks verified');await sleep(600);
+ const m=model();mark(2);log(`[R–XL] selected for pf ${m.pf} (τ = ${(m.tau*1e3).toFixed(2)} ms)`);await sleep(700);
+ mark(3);log(`[HC-TX] firing ${m.kA} kA for ~20 ms at 24 V`);await sleep(600);
+ mark(4);sim=m;const t0=performance.now();
+ await new Promise((res,rej)=>{(function f(n){if(ab){rej('ab');return}const tc=Math.min(TMAX,(n-t0)/2200*TMAX);draw(tc);tc<TMAX?requestAnimationFrame(f):res()})(t0)});
+ mark(5);log(`[DAQ] MCB interrupted at ${m.tt.toFixed(2)} ms`);await sleep(600);
+ mark(6);const pass=m.it<=m.lim&&m.tt<=10;
+ $('rIp').textContent=(m.ip/1000).toFixed(2)+' kA';$('rTr').textContent=m.tt.toFixed(1)+' ms';$('rIt').textContent=Math.round(m.it).toLocaleString()+' A²s';
+ const v=$('rV');v.textContent=pass?'PASS':'FAIL';v.className=pass?'pass':'fail';log(`[ANALYSIS] Ip=${m.ip.toFixed(0)} A, I²t=${m.it.toFixed(0)} A²s → ${pass?'PASS':'FAIL'}`);await sleep(600);
+ mark(7);runs++;
+ $('rep').innerHTML=[['Test ID','CC-'+String(runs).padStart(3,'0')],['MCB',`${m.In} A, curve ${m.cv}`],['Prospective current',m.kA+' kA rms'],['Power factor / τ',`${m.pf} / ${(m.tau*1e3).toFixed(2)} ms`],['Peak current Ip',(m.ip/1000).toFixed(2)+' kA'],['Trip time',m.tt.toFixed(2)+' ms'],['I²t',Math.round(m.it).toLocaleString()+' A²s (limit '+m.lim.toLocaleString()+', illustrative)'],['Result',pass?'PASS':'FAIL']].map(r=>`<tr><td>${r[0]}</td><td><b>${r[1]}</b></td></tr>`).join('');
+ log('[REPORT] digital report generated');tcv();mark(8);busy=false;$('go').disabled=false;$('ab').disabled=true}
+function tcv(){const c=$('cv2'),g=c.getContext('2d'),d=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;c.width=w*d;c.height=h*d;g.setTransform(d,0,0,d,0,0);
+ const cs=getComputedStyle(document.documentElement),mut=cs.getPropertyValue('--mut'),bd=cs.getPropertyValue('--bd'),or=cs.getPropertyValue('--or'),rd=cs.getPropertyValue('--rd'),bl=cs.getPropertyValue('--bl');
+ const L=46,B=h-22,T=8,R=w-10,X=m=>L+(R-L)*Math.log10(m)/3,Y=t=>B-(B-T)*(Math.log10(t)+3)/7;
+ g.font='11px Calibri,Arial';g.fillStyle=mut;g.strokeStyle=bd;g.lineWidth=1;
+ [1,10,100,1000].forEach(m=>{g.beginPath();g.moveTo(X(m),T);g.lineTo(X(m),B);g.stroke();g.fillText(m+'×',X(m)-8,h-6)});
+ [.001,.01,.1,1,10,100,1000,10000].forEach(t=>{g.beginPath();g.moveTo(L,Y(t));g.lineTo(R,Y(t));g.stroke();g.fillText(t>=1?t+' s':(t*1000)+' ms',2,Y(t)+4)});
+ if(!sim)return;const [lo,hi]={B:[3,5],C:[5,10],D:[10,20]}[sim.cv];
+ g.globalAlpha=.18;g.fillStyle=or;g.fillRect(X(lo),T,X(hi)-X(lo),B-T);g.globalAlpha=1;
+ g.strokeStyle=bl;g.lineWidth=2.5;g.beginPath();[[1.13,7200],[1.45,3600],[2.55,30],[lo,4],[lo,.008],[1000,.006]].forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.stroke();
+ const m=sim.kA*1000/sim.In,px=X(Math.min(m,1000)),py=Y(sim.tt/1000);g.fillStyle=rd;g.beginPath();g.arc(px,py,6,0,7);g.fill();g.fillText('test point '+Math.round(m)+'× In, '+sim.tt.toFixed(1)+' ms',Math.min(px-150,R-190),py-12)}
+$('ab').onclick=()=>{if(busy)ab=true};
+$('go').onclick=run;
+$('rs').onclick=()=>{if(busy)return;sim=null;draw(0);tcv();mark(-1);['rIp','rTr','rIt','rV'].forEach(i=>{$(i).textContent='–';$(i).className=''});$('msg').textContent='';$('log').textContent='';$('rep').innerHTML='<tr><td colspan="2">Run a test to generate the digital report.</td></tr>'};
+addEventListener('resize',()=>{draw(TMAX);tcv()});mark(-1);draw(0);tcv();
+</script></body></html>
