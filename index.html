@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MCB Test System – 3D Concept Model</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f7fb;--card:#fff;--tx:#1b2430;--mut:#5b6675;--bd:#d9e1ec;--bl:#0070c0;--or:#e8731a}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1520;--card:#172232;--tx:#e6edf6;--mut:#9aa9bc;--bd:#2a3a52}}
+:root[data-theme="dark"]{--bg:#0e1520;--card:#172232;--tx:#e6edf6;--mut:#9aa9bc;--bd:#2a3a52}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:Calibri,'Segoe UI',Arial,sans-serif}
+header{background:var(--bl);color:#fff;padding:12px 18px}header h1{margin:0;font-family:'Times New Roman',serif;font-size:clamp(19px,3.2vw,28px)}header p{margin:3px 0 0;font-size:13.5px}
+#v{position:relative;height:min(68vh,620px);min-height:360px;background:radial-gradient(circle at 50% 30%,#22344f,#0b1220);touch-action:none;cursor:grab;overflow:hidden}
+canvas{display:block;width:100%;height:100%}
+.bar{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap}
+.bar button,.chips button{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:99px;padding:6px 12px;font-size:13px;font-weight:700;cursor:pointer}
+.bar button.on,.chips button.on{background:var(--or);color:#fff;border-color:var(--or)}
+.tag{position:absolute;right:10px;bottom:8px;font-size:12px;color:#fff;background:rgba(0,0,0,.5);padding:4px 10px;border-radius:99px}
+.wrap{max-width:1150px;margin:0 auto;padding:12px 14px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+#info{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;font-size:15px;min-height:64px}
+#info b{color:var(--bl)}
+</style></head><body>
+<header><h1>MCB Test System – 3D Concept Model</h1><p>Non-working visual model · SIH 2026 · PS 26029 · Team Current Control</p></header>
+<div id="v"><div class="bar"><button data-v="iso" class="on">Isometric</button><button data-v="front">Front</button><button data-v="top">Top</button><button data-v="side">Side</button><button id="rot" class="on">Auto-rotate</button><button id="lab" class="on">Labels</button></div><div class="tag">Drag to rotate · scroll / pinch buttons to zoom</div></div>
+<div class="wrap"><div class="chips" id="chips"></div><div id="info">Tap a module to fly the camera to it.</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const el=document.getElementById('v');
+const R=new THREE.WebGLRenderer({antialias:true,alpha:true});R.setPixelRatio(Math.min(devicePixelRatio||1,2));R.shadowMap.enabled=true;el.prepend(R.domElement);
+const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(42,1,.1,100);
+S.add(new THREE.AmbientLight(0xffffff,.65));const dl=new THREE.DirectionalLight(0xffffff,.9);dl.position.set(6,10,8);dl.castShadow=true;dl.shadow.mapSize.set(1024,1024);Object.assign(dl.shadow.camera,{left:-9,right:9,top:9,bottom:-9});S.add(dl);
+const pl=new THREE.PointLight(0x66aaff,.6,20);pl.position.set(-5,4,4);S.add(pl);
+const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.55,metalness:.25},o||{}));
+function box(w,h,d,x,y,z,m){const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);o.castShadow=o.receiveShadow=true;S.add(o);return o}
+function cyl(r,h,x,y,z,m,rx,rz){const o=new THREE.Mesh(new THREE.CylinderGeometry(r,r,h,28),m);o.position.set(x,y,z);o.rotation.x=rx||0;o.rotation.z=rz||0;o.castShadow=true;S.add(o);return o}
+function tor(r,t,x,y,z,m,ry){const o=new THREE.Mesh(new THREE.TorusGeometry(r,t,14,32),m);o.position.set(x,y,z);o.rotation.y=ry||0;o.castShadow=true;S.add(o);return o}
+function wire(p,r,c){const o=new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(p.map(v=>new THREE.Vector3(...v)),false,'catmullrom',.15),40,r,8),M(c,{roughness:.4}));o.castShadow=true;S.add(o)}
+function tex(w,h,f){const c=document.createElement('canvas');c.width=w;c.height=h;f(c.getContext('2d'),w,h);return new THREE.CanvasTexture(c)}
+// floor + bench
+const fl=new THREE.Mesh(new THREE.PlaneGeometry(40,40),M(0x1a2434,{roughness:.9}));fl.rotation.x=-Math.PI/2;fl.position.y=-.6;fl.receiveShadow=true;S.add(fl);
+const gr=new THREE.GridHelper(40,40,0x33476a,0x26364f);gr.position.y=-.59;S.add(gr);
+box(11.4,.3,5,0,-.15,0,M(0x3a4658));for(const x of[-5.3,5.3])for(const z of[-2.2,2.2])box(.25,.45,.25,x,-.38,z,M(0x2a3444));
+// HC transformer
+const iron=M(0x8892a0,{metalness:.6}),cu=M(0xb87333,{metalness:.8,roughness:.35});
+box(2.3,.35,1.3,-4,.175,0,iron);box(2.3,.3,1.3,-4,1.7,0,iron);cyl(.45,1.2,-4.5,.95,0,cu);cyl(.45,1.2,-3.5,.95,0,cu);box(.3,1.2,.5,-4,.95,0,iron);
+cyl(.09,.3,-4.5,2.0,0,M(0xd0d4da,{metalness:.8}));cyl(.09,.3,-3.5,2.0,0,M(0xd0d4da,{metalness:.8}));
+// R-XL bank
+box(2.1,1.7,.9,-1.6,.85,-.15,M(0x2b3646));
+for(const y of[.4,.75])for(const x of[-1.95,-1.6,-1.25])cyl(.11,.55,x,y,.4,M(0xc9a66b),0,Math.PI/2*0+0).rotation.x=Math.PI/2;
+for(const x of[-2.05,-1.6,-1.15])tor(.24,.07,x,1.25,.4,M(0x2f7fd0,{metalness:.5}));
+box(2.1,.08,.9,-1.6,1.74,-.15,M(0x556070));
+// test chamber
+box(2.6,.15,1.9,1.3,.075,0,M(0x556070));box(2.2,1.3,.05,1.3,.85,-.7,M(0x3a4658));
+box(1.5,.08,.16,1.3,.55,-.55,M(0xb0b6bf));
+[0,1,2].forEach(i=>{box(.2,.44,.32,.85+i*.27,.8,-.4,M(0xf2f2f2));box(.06,.12,.06,.85+i*.27,1.06,-.4,M(i==1?0xc62828:0x222222))});
+tor(.22,.045,1.12,1.5,-.4,M(0xe8731a),Math.PI/2);cyl(.03,.9,1.12,1.1,-.4,M(0x222222));
+const gl=new THREE.Mesh(new THREE.BoxGeometry(2.3,1.7,1.7),new THREE.MeshPhysicalMaterial({color:0x9fd4ff,transparent:true,opacity:.2,roughness:.05,metalness:0,side:THREE.DoubleSide,depthWrite:false}));gl.position.set(1.3,1.0,0);S.add(gl);
+const eg=new THREE.LineSegments(new THREE.EdgesGeometry(gl.geometry),new THREE.LineBasicMaterial({color:0xffc400}));eg.position.copy(gl.position);S.add(eg);
+box(2.6,.12,.06,1.3,.2,.95,M(0xffc400));box(.4,.4,.06,2.35,1.0,.55,M(0xffc400));box(.16,.16,.1,2.35,1.0,.6,M(0xc62828));
+// DAQ
+box(1.4,.3,.8,2.7,.15,1.75,M(0x20262f));
+const dq=tex(256,160,(g,w,h)=>{g.fillStyle='#05080d';g.fillRect(0,0,w,h);g.strokeStyle='#e8731a';g.lineWidth=3;g.beginPath();for(let x=0;x<w;x++){const t=x/w,y=h*.8-(t<.55?Math.abs(Math.sin(t*14))*h*.55:0);x?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();g.fillStyle='#4cc47a';g.font='16px Arial';g.fillText('High-Speed DAQ',8,18)});
+const ds=new THREE.Mesh(new THREE.PlaneGeometry(1.1,.68),new THREE.MeshBasicMaterial({map:dq}));ds.position.set(2.7,.62,1.5);ds.rotation.x=-.25;S.add(ds);box(1.2,.78,.05,2.7,.6,1.45,M(0x111));
+// control cabinet
+box(1.8,3.3,1.2,4.5,1.65,0,M(0xdfe3e8,{metalness:.1}));
+const hm=tex(512,320,(g,w,h)=>{g.fillStyle='#0d2b4d';g.fillRect(0,0,w,h);g.fillStyle='#fff';g.font='bold 30px Arial';g.fillText('MCB TEST – HMI',20,44);g.font='24px Arial';['Fault current : 6 kA','MCB : 32 A  C-curve','Power factor : 0.7','Interlocks : OK'].forEach((t,i)=>g.fillText(t,20,95+i*38));g.fillStyle='#1e8a44';g.fillRect(20,255,180,44);g.fillStyle='#fff';g.fillText('READY',52,287);g.fillStyle='#e8731a';g.fillRect(230,255,180,44);g.fillStyle='#fff';g.fillText('START',270,287)});
+const hs=new THREE.Mesh(new THREE.PlaneGeometry(1.35,.85),new THREE.MeshBasicMaterial({map:hm}));hs.position.set(4.5,2.55,.62);S.add(hs);box(1.5,1.0,.04,4.5,2.55,.605,M(0x111));
+const leds=[];[0,1,2,3].forEach(i=>{box(.28,.5,.1,4.0+i*.33,1.6,.62,M(0x2b3646));const l=new THREE.Mesh(new THREE.SphereGeometry(.05,12,12),new THREE.MeshStandardMaterial({color:0x000,emissive:i%2?0xe8731a:0x1ee06a,emissiveIntensity:1}));l.position.set(4.0+i*.33,1.75,.7);S.add(l);leds.push(l)});
+box(.5,.5,.06,4.5,1.0,.62,M(0xffc400));cyl(.14,.12,4.5,1.0,.68,M(0xc62828),Math.PI/2);
+const bc=cyl(.16,.3,4.5,3.45,0,new THREE.MeshStandardMaterial({color:0xe8731a,emissive:0xe8731a,emissiveIntensity:.8}));
+// cables
+wire([[-4.5,2.1,0],[-4.5,2.7,0],[-1.6,2.7,0],[-1.6,1.75,-.15]],.07,0x8b1a1a);
+wire([[-2.65,.9,.1],[-1.2,.05,.9],[.3,.62,.2],[.85,.65,-.45]],.06,0x8b1a1a);
+wire([[1.12,1.7,-.4],[1.5,2.2,-.2],[2.4,.6,.9],[2.5,.3,1.7]],.025,0x3aa0ff);
+wire([[3.4,.2,1.75],[3.8,.05,1.2],[3.8,1.0,.62]],.025,0x3aa0ff);
+// labels
+const mods=[
+{n:'High-Current Transformer',p:[-4,2.6,0],d:'Generates the controlled high fault current for MCB short-circuit testing.'},
+{n:'Automated R–XL Network',p:[-1.6,2.4,0],d:'PLC-switched resistance and inductive reactance set the required power factor and repeatable fault conditions.'},
+{n:'Shielded Test Chamber',p:[1.3,2.5,0],d:'MCB under test behind a 12 mm polycarbonate shield with door-kill switch. Rogowski coil measures current without saturating.'},
+{n:'High-Speed DAQ',p:[2.7,1.5,1.6],d:'Optocoupler-isolated capture of current, arc voltage and trip instant; calculates Ip and I²t.'},
+{n:'PLC + HMI Cabinet',p:[4.5,3.9,0],d:'HMI for test inputs, PLC for sequencing and safety interlocks, emergency stop and status beacon.'}];
+const sp=[];mods.forEach((m,i)=>{const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex(512,110,(g,w,h)=>{g.fillStyle='rgba(8,14,26,.82)';g.strokeStyle='#e8731a';g.lineWidth=4;g.beginPath();g.roundRect?g.roundRect(4,4,w-8,h-8,24):g.rect(4,4,w-8,h-8);g.fill();g.stroke();g.fillStyle='#fff';g.font='bold 36px Calibri,Arial';g.textAlign='center';g.fillText(m.n,w/2,68)}),depthTest:false}));s.scale.set(2.8,.6,1);s.position.set(...m.p);s.renderOrder=9;S.add(s);sp.push(s)});
+// camera control
+let cur={t:.75,p:1.05,r:14},goal={t:.75,p:1.05,r:14},tg=new THREE.Vector3(0,1,0),tgG=new THREE.Vector3(0,1,0),auto=true,drag=false,lx=0,ly=0;
+const views={iso:[.75,1.05,14],front:[0,1.32,13],top:[0,.12,15],side:[1.45,1.25,14]};
+function size(){const w=el.clientWidth,h=el.clientHeight;R.setSize(w,h);C.aspect=w/h;C.updateProjectionMatrix()}addEventListener('resize',size);size();
+el.addEventListener('pointerdown',e=>{if(e.target.closest('.bar'))return;drag=true;auto=false;rot.classList.remove('on');lx=e.clientX;ly=e.clientY;el.style.cursor='grabbing'});
+addEventListener('pointerup',()=>{drag=false;el.style.cursor='grab'});
+addEventListener('pointermove',e=>{if(!drag)return;goal.t-=(e.clientX-lx)*.008;goal.p=Math.max(.1,Math.min(1.5,goal.p-(e.clientY-ly)*.006));lx=e.clientX;ly=e.clientY});
+el.addEventListener('wheel',e=>{e.preventDefault();goal.r=Math.max(5,Math.min(26,goal.r+e.deltaY*.01))},{passive:false});
+const rot=document.getElementById('rot');rot.onclick=()=>{auto=!auto;rot.classList.toggle('on',auto)};
+document.getElementById('lab').onclick=e=>{const on=e.target.classList.toggle('on');sp.forEach(s=>s.visible=on)};
+document.querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-v]').forEach(x=>x.classList.remove('on'));b.classList.add('on');const v=views[b.dataset.v];goal.t=v[0];goal.p=v[1];goal.r=v[2];tgG.set(0,1,0);auto=false;rot.classList.remove('on')});
+const ch=document.getElementById('chips');mods.forEach((m,i)=>{const b=document.createElement('button');b.textContent=m.n;b.onclick=()=>{[...ch.children].forEach(x=>x.classList.remove('on'));b.classList.add('on');tgG.set(m.p[0],1,m.p[2]);goal.r=8;goal.p=1.15;auto=false;rot.classList.remove('on');document.getElementById('info').innerHTML='<b>'+m.n+'</b> – '+m.d};ch.appendChild(b)});
+(function loop(t){requestAnimationFrame(loop);if(auto)goal.t+=.003;cur.t+=(goal.t-cur.t)*.08;cur.p+=(goal.p-cur.p)*.08;cur.r+=(goal.r-cur.r)*.08;tg.lerp(tgG,.08);
+C.position.set(tg.x+cur.r*Math.sin(cur.p)*Math.sin(cur.t),tg.y+cur.r*Math.cos(cur.p),tg.z+cur.r*Math.sin(cur.p)*Math.cos(cur.t));C.lookAt(tg);
+leds.forEach((l,i)=>l.material.emissiveIntensity=.4+.6*Math.abs(Math.sin(t/500+i)));bc.material.emissiveIntensity=.5+.5*Math.abs(Math.sin(t/400));
+R.render(S,C)})(0);
+</script></body></html>
